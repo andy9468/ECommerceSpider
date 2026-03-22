@@ -5,6 +5,7 @@ from typing import ClassVar
 
 
 class Settings(BaseSettings):
+    TYPE_WORDS_STR: str = Field(default="玩具,手机", env="TYPE_WORDS_STR")
     MYSQL_HOST: str = Field(default="127.0.0.1", env="MYSQL_HOST")
     MYSQL_PORT: int = Field(default=3306, env="MYSQL_PORT")
     MYSQL_USER: str = Field(default="root", env="MYSQL_USER")
@@ -23,6 +24,7 @@ class Settings(BaseSettings):
     NO_IMGS: bool = Field(default=False, env="NO_IMGS")
     NO_JS: bool = Field(default=False, env="NO_JS")
     HEADLESS: bool = Field(default=False, env="HEADLESS")
+    PROXY: str = Field(default="", env="PROXY")
 
     ON_ECHO: bool = Field(default=False, env="ON_ECHO")  # 是否开启查询日志
     LOCK: ClassVar[Lock] = Lock()

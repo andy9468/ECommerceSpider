@@ -248,7 +248,7 @@ async def main():
     sp_type = AmazonTypeSpider(settings.MAX_CONCURRENT_TYPE)
 
     base_url = 'https://www.amazon.com/s?k='
-    keywords = ['玩具', ]
+    keywords = settings.TYPE_WORDS_STR.split(",")
     total_search_urls = await sp_type.get_total_search_urls(base_url, keywords)
     print(total_search_urls)
     print(f"所有搜索页面urls总数：{len(total_search_urls)}")

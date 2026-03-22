@@ -8,6 +8,7 @@ from settings import settings
 HEADLESS = settings.HEADLESS
 NO_IMGS = settings.NO_IMGS
 NO_JS = settings.NO_JS
+PROXY = settings.PROXY
 
 
 class BaseMultiTabSpider(ABC):
@@ -53,6 +54,8 @@ class BaseMultiTabSpider(ABC):
         co.set_argument('--disable-gpu')
         co.set_argument('--no-sandbox')
         co.set_argument('--disable-dev-shm-usage')
+        if PROXY:
+            self.proxy = PROXY
         if self.proxy:
             co.set_argument(f'--proxy-server={self.proxy}')
 
