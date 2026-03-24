@@ -64,7 +64,7 @@ class BaseMultiTabSpider(ABC):
     def create_browser(self) -> ChromiumPage:
         """创建浏览器实例"""
         browser = ChromiumPage(self.browser_options)
-
+        # browser.open()
         return browser
 
     def find_flag_element(self, tab, timeout: int = 10) -> Optional[Any]:
@@ -96,7 +96,7 @@ class BaseMultiTabSpider(ABC):
         try:
             tab = self.browser.new_tab()
 
-            flag = tab.get(url, timeout=timeout)
+            flag = tab.get(url, timeout=timeout) #获得标签
 
             self.find_flag_element(tab)
 
@@ -137,16 +137,60 @@ class BaseMultiTabSpider(ABC):
                 print(f"关闭浏览器失败：{e}")
 
     async def async_open_tab(self, *args, **kwargs):
-        async with self.semaphore:
-            loop = asyncio.get_event_loop()
+        """
+        异步打开标签页
 
+        Args:
+            args: 位置参数，第一个为 url
+            kwargs: 关键字参数
+                - prefix_visit: 是否先访问首页建立会话（默认 False）
+                - prefix_url: 前置访问的 URL（默认 "https://www.amazon.com"）
+        """
+        async with self.semaphore:
+            loop = asyncio.get_running_loop()
             result = await loop.run_in_executor(
                 None,
-                lambda: self.open_tab(*args, **kwargs)
+                lambda: self._open_tab_with_prefix(*args, **kwargs)
             )
-            html = result
+        return result
 
-        return html
+    def _open_tab_with_prefix(self, url: str, prefix_visit: bool = False,
+                              prefix_url: str = "https://www.amazon.com",
+                              **kwargs) -> Optional[str]:
+        """
+        带前置访问的标签页打开方法（用于反爬）
+
+        在同一个标签页内先访问首页建立会话，再访问目标页面
+        """
+        tab = None
+        try:
+            tab = self.browser.new_tab()
+
+            # 先访问首页建立会话（反爬策略）
+            if prefix_visit and url != prefix_url:
+                tab.get(prefix_url, timeout=10)
+                time.sleep(0.5)  # 短暂等待，模拟真实用户
+
+            # 访问目标页面
+            flag = tab.get(url, timeout=kwargs.get('timeout', 10))
+
+            self.find_flag_element(tab)
+            tab = self.do_something_in_tab(tab, url=url, **kwargs)
+
+            html = ''
+            if flag:
+                html = tab.html
+                self.do_something_out_of_tab(html, url=url, **kwargs)
+
+            return html
+
+        except Exception as e:
+            print(f"任务执行失败：{url}, 错误：{e}")
+            raise
+
+        finally:
+            if tab:
+                self.close_tab_safe(tab)
 
 
 class BaiduMultiTabSpider(BaseMultiTabSpider):
